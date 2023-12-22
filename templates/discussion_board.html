@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Board</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 60%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .discussion-card {
+            background-color: #fafafa;
+            border: 1px solid #e1e1e1;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .discussion-card-header {
+            border-bottom: 1px solid #e1e1e1;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .discussion-card-title {
+            font-size: 1.2em;
+            color: #333;
+            margin: 0;
+        }
+        .discussion-card-content {
+            color: #666;
+        }
+        .edit-btn, .delete-btn {
+            position: absolute;
+            top: 10px;
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.8em;
+        }
+        .edit-btn {
+            right: 100px;
+            background-color: #007bff;
+        }
+        .delete-btn {
+            right: 10px;
+            background-color: #dc3545;
+        }
+        form {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        input, textarea {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        .edit-form {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            z-index: 2;
+            width: 90%;
+            box-sizing: border-box;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .edit-form input, .edit-form textarea, .edit-form button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .edit-form .btn {
+            display: block;
+        }
+        .edit-form .confirm-btn {
+            background-color: #28a745;
+        }
+        .edit-form .cancel-btn {
+            background-color: #6c757d;
+        }
+    </style>
+    <script>
+        function toggleEditForm(discussionId) {
+            var form = document.getElementById('edit-form-' + discussionId);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <a href="https://sc5154.wixsite.com/mysite" class="btn btn-secondary mb-3">Back</a>
+        <h1>Discussion Board</h1>
+        <form id="new-discussion-form" action="/discussions/{{ email }}/post" method="post">
+            <h2>Post a Discussion</h2>
+            <input type="text" id="title" name="title" placeholder="Title" required>
+            <textarea id="content" name="content" rows="4" placeholder="Content" required></textarea>
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit">Post</button>
+        </form>
+
+        <div>
+            <h2>Discussions</h2>
+            <!-- Loop through discussions -->
+            {% for discussion in discussions | reverse %}
+                <div class="discussion-card">
+                    <div class="discussion-card-header">
+                        {{ discussion.email }} - <small>{{ discussion.timestamp }}</small>
+                    </div>
+                    <h2 class="discussion-card-title">{{ discussion.title }}</h2>
+                    <p class="discussion-card-content">{{ discussion.content }}</p>
+
+                    {% if discussion.email == email %}
+                        <!-- Edit button -->
+                        <button onclick="toggleEditForm({{ discussion.discussion_id }})" class="edit-btn">Edit</button>
+
+                        <!-- Hidden Edit Form -->
+                        <div id="edit-form-{{ discussion.discussion_id }}" class="edit-form">
+                            <form action="/discussions/{{ email }}/request_edit" method="post">
+                                <input type="hidden" name="discussion_id" value="{{ discussion.discussion_id }}">
+                                <input type="text" name="new_title" placeholder="New title" value="{{ discussion.title }}" required>
+                                <textarea name="new_content" rows="4" placeholder="New content" required>{{ discussion.content }}</textarea>
+                                <button type="submit" class="btn confirm-btn">Confirm</button>
+                                <button type="button" onclick="toggleEditForm({{ discussion.discussion_id }})" class="btn cancel-btn">Cancel</button>
+                            </form>
+                        </div>
+
+                        <!-- Delete button -->
+                        <form action="/discussions/{{ email }}/request_delete" method="post" style="display: inline;">
+                            <input type="hidden" name="discussion_id" value="{{ discussion.discussion_id }}">
+                            <button type="submit" class="delete-btn">Delete</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p>No discussions to display.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+     <script>
+        function toggleEditForm(discussionId) {
+            var form = document.getElementById('edit-form-' + discussionId);
+            if (form.style.display === 'block') {
+                form.style.display = 'none';
+            } else {
+                form.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
